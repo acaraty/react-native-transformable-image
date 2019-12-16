@@ -1,36 +1,33 @@
-'use strict';
-
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import { Image } from 'react-native';
 
 import ViewTransformer from 'react-native-view-transformer';
 
 let DEV = false;
 
-export default class TransformableImage extends Component {
+type Props = {
+  pixels: {
+    width: number,
+    height: number,
+  },
 
+  enableTransform?: boolean,
+  enableScale?: boolean,
+  enableTranslate?: boolean,
+  onSingleTapConfirmed: PropTypes.func,
+  onTransformGestureReleased: PropTypes.func,
+  onViewTransformed: PropTypes.func,
+};
+
+export default class TransformableImage extends Component<Props> {
   static enableDebug() {
     DEV = true;
   }
 
-  static propTypes = {
-    pixels: PropTypes.shape({
-      width: PropTypes.number,
-      height: PropTypes.number,
-    }),
-
-    enableTransform: PropTypes.bool,
-    enableScale: PropTypes.bool,
-    enableTranslate: PropTypes.bool,
-    onSingleTapConfirmed: PropTypes.func,
-    onTransformGestureReleased: PropTypes.func,
-    onViewTransformed: PropTypes.func
-  };
-
   static defaultProps = {
     enableTransform: true,
     enableScale: true,
-    enableTranslate: true
+    enableTranslate: true,
   };
 
   constructor(props) {
@@ -42,7 +39,7 @@ export default class TransformableImage extends Component {
 
       imageLoaded: false,
       pixels: undefined,
-      keyAcumulator: 1
+      keyAcumulator: 1,
     };
   }
 
@@ -54,23 +51,24 @@ export default class TransformableImage extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (!sameSource(this.props.source, nextProps.source)) {
-      //image source changed, clear last image's pixels info if any
-      this.setState({pixels: undefined, keyAcumulator: this.state.keyAcumulator + 1})
+      // image source changed, clear last image's pixels info if any
+      this.setState({ pixels: undefined, keyAcumulator: this.state.keyAcumulator + 1 });
       this.getImageSize(nextProps.source);
     }
   }
 
   render() {
     let maxScale = 1;
-    let contentAspectRatio = undefined;
-    let width, height; //pixels
+    let contentAspectRatio;
+    let width;
+    let height; // pixels
 
     if (this.props.pixels) {
-      //if provided via props
+      // if provided via props
       width = this.props.pixels.width;
       height = this.props.pixels.height;
     } else if (this.state.pixels) {
-      //if got using Image.getSize()
+      // if got using Image.getSize()
       width = this.state.pixels.width;
       height = this.state.pixels.height;
     }
@@ -83,29 +81,29 @@ export default class TransformableImage extends Component {
       }
     }
 
-
     return (
       <ViewTransformer
-        ref='viewTransformer'
-        key={'viewTransformer#' + this.state.keyAccumulator} //when image source changes, we should use a different node to avoid reusing previous transform state
-        enableTransform={this.props.enableTransform && this.state.imageLoaded} //disable transform until image is loaded
+        ref="viewTransformer"
+        key={`viewTransformer#${this.state.keyAccumulator}`} // when image source changes, we should use a different node to avoid reusing previous transform state
+        enableTransform={this.props.enableTransform && this.state.imageLoaded} // disable transform until image is loaded
         enableScale={this.props.enableScale}
         enableTranslate={this.props.enableTranslate}
-        enableResistance={true}
+        enableResistance
         onTransformGestureReleased={this.props.onTransformGestureReleased}
         onViewTransformed={this.props.onViewTransformed}
         onSingleTapConfirmed={this.props.onSingleTapConfirmed}
         maxScale={maxScale}
         contentAspectRatio={contentAspectRatio}
         onLayout={this.onLayout.bind(this)}
-        style={this.props.style}>
+        style={this.props.style}
+      >
         <Image
           {...this.props}
-          style={[this.props.style, {backgroundColor: 'transparent'}]}
-          resizeMode={'contain'}
+          style={[this.props.style, { backgroundColor: 'transparent' }]}
+          resizeMode="contain"
           onLoadStart={this.onLoadStart.bind(this)}
           onLoad={this.onLoad.bind(this)}
-          capInsets={{left: 0.1, top: 0.1, right: 0.1, bottom: 0.1}} //on iOS, use capInsets to avoid image downsampling
+          capInsets={{ left: 0.1, top: 0.1, right: 0.1, bottom: 0.1 }} // on iOS, use capInsets to avoid image downsampling
         />
       </ViewTransformer>
     );
@@ -114,49 +112,50 @@ export default class TransformableImage extends Component {
   onLoadStart(e) {
     this.props.onLoadStart && this.props.onLoadStart(e);
     this.setState({
-      imageLoaded: false
+      imageLoaded: false,
     });
   }
 
   onLoad(e) {
     this.props.onLoad && this.props.onLoad(e);
     this.setState({
-      imageLoaded: true
+      imageLoaded: true,
     });
   }
 
   onLayout(e) {
-    let {width, height} = e.nativeEvent.layout;
+    const { width, height } = e.nativeEvent.layout;
     if (this.state.width !== width || this.state.height !== height) {
       this.setState({
-        width: width,
-        height: height
+        width,
+        height,
       });
     }
   }
 
   getImageSize(source) {
-    if(!source) return;
+    if (!source) return;
 
-    DEV && console.log('getImageSize...' + JSON.stringify(source));
+    DEV && console.log(`getImageSize...${JSON.stringify(source)}`);
 
     if (typeof Image.getSize === 'function') {
       if (source && source.uri) {
         Image.getSize(
           source.uri,
           (width, height) => {
-            DEV && console.log('getImageSize...width=' + width + ', height=' + height);
+            DEV && console.log(`getImageSize...width=${width}, height=${height}`);
             if (width && height) {
-              if(this.state.pixels && this.state.pixels.width === width && this.state.pixels.height === height) {
-                //no need to update state
+              if (this.state.pixels && this.state.pixels.width === width && this.state.pixels.height === height) {
+                // no need to update state
               } else {
-                this.setState({pixels: {width, height}});
+                this.setState({ pixels: { width, height } });
               }
             }
           },
           (error) => {
-            console.error('getImageSize...error=' + JSON.stringify(error) + ', source=' + JSON.stringify(source));
-          })
+            console.error(`getImageSize...error=${JSON.stringify(error)}, source=${JSON.stringify(source)}`);
+          },
+        );
       } else {
         console.warn('getImageSize...please provide pixels prop for local images');
       }
@@ -166,7 +165,7 @@ export default class TransformableImage extends Component {
   }
 
   getViewTransformerInstance() {
-    return this.refs['viewTransformer'];
+    return this.refs.viewTransformer;
   }
 }
 
