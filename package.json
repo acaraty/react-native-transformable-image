@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/acaraty/react-native-transformable-image#readme",
   "dependencies": {
-    "react-native-view-transformer": "0.0.29"
+    "react-native-view-transformer": "acaraty/react-native-view-transformer#0.0.29"
   }
 }
