@@ -1,22 +1,23 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { Image } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 
 import ViewTransformer from 'react-native-view-transformer';
 
 type Props = {|
-  pixels: {
+  pixels?: {
     width: number,
     height: number,
   },
-
+  source: Object,
+  style?: Object,
   enableTransform?: boolean,
   enableScale?: boolean,
   enableTranslate?: boolean,
-  onSingleTapConfirmed: Function,
-  onTransformGestureReleased: Function,
-  onViewTransformed: Function,
+  onSingleTapConfirmed?: Function,
+  onTransformGestureReleased?: Function,
+  onViewTransformed?: Function,
   onLoadStart?: Function,
   onLoad?: Function,
 |};
@@ -93,7 +94,7 @@ export default class TransformableImage extends Component<Props, State> {
         onLayout={this.onLayout.bind(this)}
       >
         <Image
-          style={{ backgroundColor: 'transparent' }}
+          style={[this.props.style, { backgroundColor: 'transparent' }]}
           resizeMode="contain"
           onLoadStart={this.onLoadStart.bind(this)}
           onLoad={this.onLoad.bind(this)}
