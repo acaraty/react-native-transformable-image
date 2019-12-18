@@ -1,38 +1,47 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { Image, StyleSheet } from 'react-native';
+import { Image } from 'react-native';
 
 import ViewTransformer from 'react-native-view-transformer';
 
-type Props = {|
-  pixels?: {
+let DEV = false;
+
+type Props = {
+  pixels: {
     width: number,
     height: number,
   },
-  source: Object,
-  style?: Object,
+
   enableTransform?: boolean,
   enableScale?: boolean,
   enableTranslate?: boolean,
   onSingleTapConfirmed?: Function,
   onTransformGestureReleased?: Function,
-  onViewTransformed?: Function,
-  onLoadStart?: Function,
-  onLoad?: Function,
-|};
+  onViewTransformed: Function,
+  onLoadStart: Function,
+  onLoad: Function,
+  source:Object,
+  style:Object,
+};
 
-type State = {|
-  width: number,
-  height: number,
-  imageLoaded: boolean,
+type State = {
   pixels?: {
     width: number,
     height: number,
   },
-|};
+
+  imageLoaded: boolean,
+  keyAccumulator: number,
+  width: number,
+  height: number,
+};
 
 export default class TransformableImage extends Component<Props, State> {
+  static enableDebug() {
+    DEV = true;
+  }
+
   static defaultProps = {
     enableTransform: true,
     enableScale: true,
@@ -47,12 +56,21 @@ export default class TransformableImage extends Component<Props, State> {
       height: 0,
       imageLoaded: false,
       pixels: undefined,
+      keyAccumulator: 1,
     };
   }
 
-  componentDidMount() {
+  componentWillMount() {
     if (!this.props.pixels) {
       this.getImageSize(this.props.source);
+    }
+  }
+
+  componentWillReceiveProps(nextProps: Props) {
+    if (!sameSource(this.props.source, nextProps.source)) {
+      // image source changed, clear last image's pixels info if any
+      this.setState({ pixels: undefined, keyAccumulator: this.state.keyAccumulator + 1 });
+      this.getImageSize(nextProps.source);
     }
   }
 
@@ -82,6 +100,8 @@ export default class TransformableImage extends Component<Props, State> {
 
     return (
       <ViewTransformer
+        ref="viewTransformer"
+        key={`viewTransformer#${this.state.keyAccumulator}`} // when image source changes, we should use a different node to avoid reusing previous transform state
         enableTransform={this.props.enableTransform && this.state.imageLoaded} // disable transform until image is loaded
         enableScale={this.props.enableScale}
         enableTranslate={this.props.enableTranslate}
@@ -92,8 +112,10 @@ export default class TransformableImage extends Component<Props, State> {
         maxScale={maxScale}
         contentAspectRatio={contentAspectRatio}
         onLayout={this.onLayout.bind(this)}
+        style={this.props.style}
       >
         <Image
+          source={this.props.source}
           style={[this.props.style, { backgroundColor: 'transparent' }]}
           resizeMode="contain"
           onLoadStart={this.onLoadStart.bind(this)}
@@ -105,7 +127,7 @@ export default class TransformableImage extends Component<Props, State> {
   }
 
   onLoadStart(e: Object) {
-    if (this.props.onLoadStart) {
+    if(this.props.onLoadStart) {
       this.props.onLoadStart(e);
     }
     this.setState({
@@ -114,7 +136,7 @@ export default class TransformableImage extends Component<Props, State> {
   }
 
   onLoad(e: Object) {
-    if (this.props.onLoad) {
+    if(this.props.onLoad) {
       this.props.onLoad(e);
     }
     this.setState({
@@ -135,18 +157,47 @@ export default class TransformableImage extends Component<Props, State> {
   getImageSize(source: Object) {
     if (!source) return;
 
+    DEV && console.log(`getImageSize...${JSON.stringify(source)}`);
+
     if (typeof Image.getSize === 'function') {
       if (source && source.uri) {
-        Image.getSize(source.uri, (width, height) => {
-          if (width && height) {
-            if (this.state.pixels && this.state.pixels.width === width && this.state.pixels.height === height) {
-              // no need to update state
-            } else {
-              this.setState({ pixels: { width, height } });
+        Image.getSize(
+          source.uri,
+          (width, height) => {
+            DEV && console.log(`getImageSize...width=${width}, height=${height}`);
+            if (width && height) {
+              if (this.state.pixels && this.state.pixels.width === width && this.state.pixels.height === height) {
+                // no need to update state
+              } else {
+                this.setState({ pixels: { width, height } });
+              }
             }
-          }
-        });
+          },
+          (error) => {
+            console.error(`getImageSize...error=${JSON.stringify(error)}, source=${JSON.stringify(source)}`);
+          },
+        );
+      } else {
+        console.warn('getImageSize...please provide pixels prop for local images');
       }
+    } else {
+      console.warn('getImageSize...Image.getSize function not available before react-native v0.28');
     }
   }
+
+  getViewTransformerInstance() {
+    return this.refs.viewTransformer;
+  }
+}
+
+function sameSource(source, nextSource) {
+  if (source === nextSource) {
+    return true;
+  }
+  if (source && nextSource) {
+    if (source.uri && nextSource.uri) {
+      return source.uri === nextSource.uri;
+    }
+  }
+  return false;
 }
