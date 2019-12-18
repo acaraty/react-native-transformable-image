@@ -8,7 +8,7 @@ import ViewTransformer from 'react-native-view-transformer';
 let DEV = false;
 
 type Props = {
-  pixels: {
+  pixels?: {
     width: number,
     height: number,
   },
@@ -18,9 +18,9 @@ type Props = {
   enableTranslate?: boolean,
   onSingleTapConfirmed?: Function,
   onTransformGestureReleased?: Function,
-  onViewTransformed: Function,
-  onLoadStart: Function,
-  onLoad: Function,
+  onViewTransformed?: Function,
+  onLoadStart?: Function,
+  onLoad?: Function,
   source:Object,
   style:Object,
 };
