@@ -1,7 +1,7 @@
 /* @flow */
 
 import React, { Component } from 'react';
-import { Image } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 import ViewTransformer from 'react-native-view-transformer';
 
@@ -114,7 +114,7 @@ export default class TransformableImage extends Component<Props, State> {
         onLayout={this.onLayout.bind(this)}
         style={this.props.style}
       >
-        <Image
+        <FastImage
           source={this.props.source}
           style={[this.props.style, { backgroundColor: 'transparent' }]}
           resizeMode="contain"
