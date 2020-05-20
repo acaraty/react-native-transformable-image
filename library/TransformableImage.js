@@ -2,7 +2,6 @@
 
 import React, { Component } from 'react';
 import FastImage from 'react-native-fast-image';
-
 import ViewTransformer from 'react-native-view-transformer';
 
 let DEV = false;
@@ -60,20 +59,6 @@ export default class TransformableImage extends Component<Props, State> {
     };
   }
 
-  componentWillMount() {
-    if (!this.props.pixels) {
-      this.getImageSize(this.props.source);
-    }
-  }
-
-  componentWillReceiveProps(nextProps: Props) {
-    if (!sameSource(this.props.source, nextProps.source)) {
-      // image source changed, clear last image's pixels info if any
-      this.setState({ pixels: undefined, keyAccumulator: this.state.keyAccumulator + 1 });
-      this.getImageSize(nextProps.source);
-    }
-  }
-
   render() {
     let maxScale = 1;
     let contentAspectRatio;
@@ -120,7 +105,6 @@ export default class TransformableImage extends Component<Props, State> {
           resizeMode="contain"
           onLoadStart={this.onLoadStart.bind(this)}
           onLoad={this.onLoad.bind(this)}
-          capInsets={{ left: 0.1, top: 0.1, right: 0.1, bottom: 0.1 }} // on iOS, use capInsets to avoid image downsampling
         />
       </ViewTransformer>
     );
@@ -140,6 +124,7 @@ export default class TransformableImage extends Component<Props, State> {
       this.props.onLoad(e);
     }
     this.setState({
+      pixels: { width: e.nativeEvent.width, height:e.nativeEvent.height },
       imageLoaded: true,
     });
   }
@@ -159,9 +144,9 @@ export default class TransformableImage extends Component<Props, State> {
 
     DEV && console.log(`getImageSize...${JSON.stringify(source)}`);
 
-    if (typeof Image.getSize === 'function') {
+    if (typeof RNImage.getSize === 'function') {
       if (source && source.uri) {
-        Image.getSize(
+        RNImage.getSize(
           source.uri,
           (width, height) => {
             DEV && console.log(`getImageSize...width=${width}, height=${height}`);
