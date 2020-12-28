@@ -139,37 +139,6 @@ export default class TransformableImage extends Component<Props, State> {
     }
   }
 
-  getImageSize(source: Object) {
-    if (!source) return;
-
-    DEV && console.log(`getImageSize...${JSON.stringify(source)}`);
-
-    if (typeof RNImage.getSize === 'function') {
-      if (source && source.uri) {
-        RNImage.getSize(
-          source.uri,
-          (width, height) => {
-            DEV && console.log(`getImageSize...width=${width}, height=${height}`);
-            if (width && height) {
-              if (this.state.pixels && this.state.pixels.width === width && this.state.pixels.height === height) {
-                // no need to update state
-              } else {
-                this.setState({ pixels: { width, height } });
-              }
-            }
-          },
-          (error) => {
-            console.error(`getImageSize...error=${JSON.stringify(error)}, source=${JSON.stringify(source)}`);
-          },
-        );
-      } else {
-        console.warn('getImageSize...please provide pixels prop for local images');
-      }
-    } else {
-      console.warn('getImageSize...Image.getSize function not available before react-native v0.28');
-    }
-  }
-
   getViewTransformerInstance() {
     return this.refs.viewTransformer;
   }
